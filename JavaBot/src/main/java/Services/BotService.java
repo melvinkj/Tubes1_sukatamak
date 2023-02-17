@@ -250,7 +250,7 @@ public class BotService {
 
         if (biggerPlayerList.size() != 0){
             System.out.println("Bigger Player");
-            if (getDistanceBetween(biggerPlayerList.get(0), getBot()) <= getBot().getSize() + biggerPlayerList.get(0).getSize() + 120 ) {
+            if (getDistanceBetween(biggerPlayerList.get(0), getBot())/60 <= biggerPlayerList.get(0).getSize()/biggerPlayerList.get(0).getSpeed()) {
                 if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
                     playerAction.heading = getHeadingBetween(biggerPlayerList.get(0));
                     System.out.println("Torpedo 2");
@@ -288,9 +288,10 @@ public class BotService {
         .sorted(Comparator
                 .comparing(item -> getDistanceBetween(bot, item)))
         .collect(Collectors.toList());
+
         if (smallerPlayerList.size() != 0) {
             System.out.println("Smaller Player");
-            if (getDistanceBetween(smallerPlayerList.get(0), getBot()) <= getBot().getSize() + smallerPlayerList.get(0).getSize() + 80){
+            if (getDistanceBetween(smallerPlayerList.get(0), getBot())/60 <= smallerPlayerList.get(0).getSize()/smallerPlayerList.get(0).getSpeed()){
                 if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
                     playerAction.heading = getHeadingBetween(smallerPlayerList.get(0));
                     playerAction.action = PlayerActions.FIRETORPEDOES;
@@ -313,8 +314,8 @@ public class BotService {
     public boolean getCentered(PlayerAction playerAction){
         return getCentered(playerAction, 1);
     }
-    public boolean getCentered(PlayerAction playerAction, double sensitifity){
-        return getCentered(playerAction, sensitifity, false);
+    public boolean getCentered(PlayerAction playerAction, double sensitivity){
+        return getCentered(playerAction, sensitivity, false);
     }
     public boolean getCentered(PlayerAction playerAction, double sensitifity, boolean pass){
         double dif_x;
