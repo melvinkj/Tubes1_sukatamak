@@ -173,7 +173,7 @@ public class BotService {
                     playerAction.action = PlayerActions.ACTIVATESHIELD;
                     this.playerAction = playerAction;
                     return true;
-                } else if (getBot().shieldCount == 0 && !(this.bot.getShieldCount() == 0 || this.bot.getArrEffects()[4] == 1)){ // menembaki torpedo yang datang
+                } else if (!(this.bot.getShieldCount() == 0 || this.bot.getArrEffects()[4] == 1)){ // menembaki torpedo yang datang
                     playerAction.heading = this.getBot().getHeadingBetween(torpedoList.get(i));
                     playerAction.action = PlayerActions.FIRETORPEDOES;
                     return true;
@@ -183,9 +183,15 @@ public class BotService {
                 
             } else if (-1*hitDegree <= torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot) && torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot) <= hitDegree) {
                 // melarikan diri
-                playerAction.action = PlayerActions.STARTAFTERBURNER;
-                playerAction.heading = torpedoList.get(i).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
-                return true;
+                if (this.bot.getArrEffects()[0] == 0) { // menyalakan afterburner apabila belum menyala
+                    playerAction.action = PlayerActions.STARTAFTERBURNER;
+                    playerAction.heading = torpedoList.get(0).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
+                    return true;
+                } else {
+                    playerAction.action = PlayerActions.FORWARD;
+                    playerAction.heading = torpedoList.get(0).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
+                    return true;
+                }
             }
         }
         
@@ -195,49 +201,113 @@ public class BotService {
     /*
      * Prosedur computeShooter()
      * menembak musuh jika masuk pada range tembakan
-     */
-    public boolean computeShooter(PlayerAction playerAction) {
-        return computeShooter(playerAction, 1);
-    }
+    //  */
+    // public boolean computeShooter(PlayerAction playerAction) {
+    //     return computeShooter(playerAction, 1);
+    // }
 
-    public boolean computeShooter(PlayerAction playerAction, int accuracy) {
-        if (this.bot.getSize() <= 5 || this.bot.getTorpedoSalvoCount() == 0)
-        {
-            return false;
-        }
+    // public boolean computeShooter(PlayerAction playerAction, int accuracy) {
+    //     if (this.bot.getSize() <= 5 || this.bot.getTorpedoSalvoCount() == 0)
+    //     {
+    //         return false;
+    //     }
 
 
-        var playerList = this.gameState.getPlayerGameObjects()
-                .stream()
-                .filter(item -> !item.id.equals(bot.id))
-                .sorted(Comparator
-                        .comparing(item -> getDistanceBetween(bot, item)))
-                .collect(Collectors.toList());
+    //     var playerList = this.gameState.getPlayerGameObjects()
+    //             .stream()
+    //             .filter(item -> !item.id.equals(bot.id))
+    //             .sorted(Comparator
+    //                     .comparing(item -> getDistanceBetween(bot, item)))
+    //             .collect(Collectors.toList());
         
 
-        if (playerList.size() != 0)
-        {  
-            int pedospeed = 60; 
+    //     if (playerList.size() != 0)
+    //     {  
+    //         int pedospeed = 60; 
 
-            for (int i = 0; i < playerList.size(); i++) 
-            {
-                GameObject target = playerList.get(i);
-                double target_distance = getDistanceBetween((this.bot), target);
-                if ((target_distance/pedospeed) < (target.getSize() / (target.getSpeed() * accuracy)))
-                {
-                    playerAction.heading = getHeadingBetween(target);
+    //         for (int i = 0; i < playerList.size(); i++) 
+    //         {
+    //             GameObject target = playerList.get(i);
+    //             double target_distance = getDistanceBetween((this.bot), target);
+    //             if ((target_distance/pedospeed) < (target.getSize() / (target.getSpeed() * accuracy)))
+    //             {
+    //                 playerAction.heading = getHeadingBetween(target);
+    //                 playerAction.action = PlayerActions.FIRETORPEDOES;
+    //                 this.playerAction = playerAction;
+    //                 return true;
+    //             }
+    //         }
+    //     }
+
+    //     else {
+    //         System.out.println("computeShooter: playerList empty");
+    //     }
+    //     return false;
+
+    // }
+    public boolean escapse (PlayerAction playerAction) {
+        var biggerPlayerList = gameState.getPlayerGameObjects()
+        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER && item.getSize() > bot.getSize() )
+        .sorted(Comparator
+                .comparing(item -> getDistanceBetween(bot, item)))
+        .collect(Collectors.toList());
+
+        if (biggerPlayerList.size() != 0){
+            System.out.println("Bigger Player");
+            if (getDistanceBetween(biggerPlayerList.get(0), getBot()) <= getBot().getSize() + biggerPlayerList.get(0).getSize() + 120 ) {
+                if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
+                    playerAction.heading = getHeadingBetween(biggerPlayerList.get(0));
+                    System.out.println("Torpedo 2");
+                    System.out.println(playerAction.heading);
+                    System.out.println(getBot().getSize());
                     playerAction.action = PlayerActions.FIRETORPEDOES;
-                    this.playerAction = playerAction;
+                    return true;
+                } else {
+                    //kabur
+                    playerAction.heading = getHeadingBetween(biggerPlayerList.get(0)) + 180;
+                    System.out.println("Kabur bang");
+                    System.out.println(playerAction.heading);
+                    System.out.println(getBot().getSize());
+                    if (getBot().effects != 1) {
+                        playerAction.action = PlayerActions.STARTAFTERBURNER;
+                    } else {
+                        playerAction.action = PlayerActions.FORWARD;
+                    }
+                    return true;
+                }
+            } else {
+                // ga nyerang
+                if (getBot().effects == 1) { 
+                    playerAction.action = PlayerActions.STOPAFTERBURNER;
                     return true;
                 }
             }
         }
+        return false;
+    }
 
-        else {
-            System.out.println("computeShooter: playerList empty");
+    public boolean smallerTarget (PlayerAction playerAction) {
+        var smallerPlayerList = gameState.getPlayerGameObjects()
+        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER && item.getSize() < bot.getSize() )
+        .sorted(Comparator
+                .comparing(item -> getDistanceBetween(bot, item)))
+        .collect(Collectors.toList());
+        if (smallerPlayerList.size() != 0) {
+            System.out.println("Smaller Player");
+            if (getDistanceBetween(smallerPlayerList.get(0), getBot()) <= getBot().getSize() + smallerPlayerList.get(0).getSize() + 80){
+                if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
+                    playerAction.heading = getHeadingBetween(smallerPlayerList.get(0));
+                    playerAction.action = PlayerActions.FIRETORPEDOES;
+                    System.out.println("Torpedo 3");
+                    System.out.println(playerAction.heading);
+                    System.out.println(getBot().getSize());
+                    return true; 
+                }
+            } else {
+                
+            }
         }
         return false;
-
     }
 
     
@@ -423,6 +493,45 @@ public class BotService {
         this.playerAction = playerAction;
         return false;
     
+    }
+
+    public boolean avoidTeleporter(PlayerAction playerAction){
+        var teleporterList = gameState.getGameObjects()
+        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
+        .sorted(Comparator
+                .comparing(item -> getDistanceBetween(bot, item)))
+        .collect(Collectors.toList());
+
+        if (teleporterList.size() == 0) {
+            return false;
+        }
+
+        var nearTeleporterPlayerList = gameState.getGameObjects()
+        .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER && item != this.bot)
+        .sorted(Comparator
+                .comparing(item -> getDistanceBetween(teleporterList.get(0), item)))
+        .collect(Collectors.toList());
+
+        if (nearTeleporterPlayerList.size() == 0) {
+            return false;
+        }
+        if (nearTeleporterPlayerList.get(0).getSize() <= this.bot.size) {
+            return false;
+        }  
+        double hitDegree = Math.atan((this.bot.getSize() + 10) / getDistanceBetween(this.getBot(), teleporterList.get(0)) * 180 / Math.PI );
+        if (-1*hitDegree <= teleporterList.get(0).getHeading() - teleporterList.get(0).getHeadingBetween(this.bot) && teleporterList.get(0).getHeading() - teleporterList.get(0).getHeadingBetween(this.bot) <= hitDegree) {
+            // melarikan diri
+            if (this.bot.getArrEffects()[0] == 0) { // menyalakan afterburner apabila belum menyala
+                playerAction.action = PlayerActions.STARTAFTERBURNER;
+                playerAction.heading = teleporterList.get(0).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
+                return true;
+            } else {
+                playerAction.action = PlayerActions.FORWARD;
+                playerAction.heading = teleporterList.get(0).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
+                return true;
+            }
+        }
+        return false;
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
