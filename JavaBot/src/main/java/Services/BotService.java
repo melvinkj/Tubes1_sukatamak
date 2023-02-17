@@ -15,41 +15,62 @@ public class BotService {
     private PlayerAction playerAction;
     private GameState gameState;
 
-    // List<UUID[]> listOfKnownTeleporter = new ArrayList<>();
+    List<UUID[]> listOfKnownTeleporter = new ArrayList<>();
+    double accuracy = 3;
 
-    // public mappingTeleporter() {
-    //     var teleporterList = gameState.getGameObjects()
-    //         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
-    //         .sorted(Comparator
-    //                 .comparing(item -> getDistanceBetween(bot, item)))
-    //         .collect(Collectors.toList());
+    public void mappingTeleporter() {
+        List<GameObject> teleporterList = gameState.getGameObjects()
+            .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
+            .sorted(Comparator
+                    .comparing(item -> getDistanceBetween(bot, item)))
+            .collect(Collectors.toList());
         
-    //     for (int i = 0; i < teleporterList.size(); i++)
-    //     {
-    //         // Check apakah teleport tersebut sudah di map pada list;
-    //         boolean listed = false;
-    //         for (int j = 0; j < listOfKnownTeleporter.size(); j++)
-    //         {
-    //             var listOfPlayer = 
-    //             if (listOfKnownTeleporter.get(j)[0].equals(teleporterList.get(i).getId()))
-    //             {
-    //                 listed = true;
-    //                 break;
-    //             }
-    //             // jika belum di list maka di map
-    //             if (!listed)
-    //             {
+        for (int i = 0; i < teleporterList.size(); i++)
+        {
+            // Check apakah teleport tersebut sudah di map pada list;
+            boolean listed = false;
+            for (int j = 0; j < listOfKnownTeleporter.size(); j++)
+            {
+                if (listOfKnownTeleporter.get(j)[0].equals(teleporterList.get(i).getId()))
+                {
+                    listed = true;
+                    break;
+                }
+                // jika belum di list maka di map
+                else 
+                {
+                    continue;
+                }
+            }
+            if (!listed)
+            {   
+                int idx = i;
+                GameObject nearestPlayer = gameState.getPlayerGameObjects()
+                    .stream()
+                    .sorted(Comparator
+                            .comparing(item -> getDistanceBetween(item, teleporterList.get(idx))))
+                    .collect(Collectors.toList()).get(0);
+                listOfKnownTeleporter.add(new UUID[] {(teleporterList.get(i).getId()), (nearestPlayer.getId())});
+            }
+        }
+    }
 
-    //                 listOfKnownTeleporter.add(new ArrayList<UUID> () {{ add(teleporterList.get(i).getId()); 
-    //                     add(); }});
-    //             }
-    //             else 
-    //             {
-    //                 continue;
-    //             }
-    //         }
-    //     }
-    // }
+    public UUID identifyTeleporter(GameObject object){
+        UUID teleport_id = object.getId();
+
+        for (int j = 0; j < listOfKnownTeleporter.size(); j++)
+        {
+            if (listOfKnownTeleporter.get(j)[0].equals(teleport_id))
+            {
+                return listOfKnownTeleporter.get(j)[1];
+            }
+            else 
+            {
+                continue;
+            }
+        }
+        return null;
+    }
 
     public BotService() {
         this.playerAction = new PlayerAction();
@@ -102,7 +123,7 @@ public class BotService {
     public boolean isSafeToHead(int heading) {
         return isSafeToHead(heading, 1);
     }
-    public boolean isSafeToHead(int heading, double sensitifity) {
+    public boolean isSafeToHead(int heading, double sensitivity) {
         heading = heading % 360; 
         /* GETTING MAP BOUNDARIES */
         int mapCenterPoint_x = this.gameState.world.centerPoint.x;
@@ -130,13 +151,6 @@ public class BotService {
                         .comparing(item -> getDistanceBetween(bot, item)))
                 .collect(Collectors.toList());
 
-        // /* LISTING ASTEROID */
-        // var asteroidList = gameState.getGameObjects()
-        //         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.ASTEROIDFIELD)
-        //         .sorted(Comparator
-        //                 .comparing(item -> getDistanceBetween(bot, item)))
-        //         .collect(Collectors.toList());
-
         int dummy_x = this.getBot().getPosition().x + (int) Math.cos(Math.toRadians(heading)) * this.getBot().getSpeed();
         int dummy_y = this.getBot().getPosition().y + (int) Math.sin(Math.toRadians(heading)) * this.getBot().getSpeed();
         int dummy_size = this.getBot().getSize();
@@ -147,7 +161,7 @@ public class BotService {
             int dif_y = dummy_y - biggerPlayerList.get(i).getPosition().y;
             int safe_radius = dummy_size + biggerPlayerList.get(i).getSize() + biggerPlayerList.get(i).getSpeed();
             
-            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitifity)
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
             {
                 return false;
             }
@@ -159,7 +173,7 @@ public class BotService {
             int dif_y = dummy_y - gasCloudList.get(i).getPosition().y;
             int safe_radius = dummy_size + gasCloudList.get(i).getSize() + gasCloudList.get(i).getSpeed();
             
-            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitifity)
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
             {
                 return false;
             }
@@ -171,7 +185,7 @@ public class BotService {
             int dif_y = dummy_y - supernovaBombList.get(i).getPosition().y;
             int safe_radius = dummy_size + supernovaBombList.get(i).getSize() + supernovaBombList.get(i).getSpeed();
             
-            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitifity)
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
             {
                 return false;
             }
@@ -182,7 +196,7 @@ public class BotService {
             int dif_y = dummy_y - mapCenterPoint_y;
             int safe_radius = mapRadius - dummy_size;
             
-            if (dif_x * dif_x + dif_y * dif_y > safe_radius * safe_radius / sensitifity)
+            if (dif_x * dif_x + dif_y * dif_y > safe_radius * safe_radius / sensitivity)
             {
                 return false;
             }
@@ -191,6 +205,97 @@ public class BotService {
         return true;
 
     }
+
+    /* 
+     * Fungsi isCoordinatSafe(GameObject item) 
+     * mengembalikan true jika hasil proyeksi bot  aman dari obtacles, 
+     * mengembalikan false jika tidak,
+     *
+     * obtacles yang dijadikan konsiderasi: map boundaries, bigger player, supernova bomb, dan gas cloud
+     */
+
+    public boolean isCoordinateSafe(int x, int y, double sensitivity) {
+        /* GETTING MAP BOUNDARIES */
+        int mapCenterPoint_x = this.gameState.world.centerPoint.x;
+        int mapCenterPoint_y = this.gameState.world.centerPoint.y;
+        int mapRadius = this.gameState.world.radius;
+
+        /* LISTING BIGGER PLAYER */
+        var biggerPlayerList = gameState.getPlayerGameObjects()
+        .stream().filter(item -> item.getSize() >= bot.getSize() && !item.id.equals(bot.id))
+        .sorted(Comparator
+                .comparing(item -> getDistanceBetween(bot, item)))
+        .collect(Collectors.toList());
+
+       /* LISTING SUPERNOVA BOMB */
+       var supernovaBombList = gameState.getGameObjects()
+       .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SUPERNOVABOMB)
+       .sorted(Comparator
+               .comparing(item -> getDistanceBetween(bot, item)))
+       .collect(Collectors.toList());
+
+        /* LISTING GASCLOUD  */
+        var gasCloudList = gameState.getGameObjects()
+                .stream().filter(item -> item.getGameObjectType() == ObjectTypes.GASCLOUD)
+                .sorted(Comparator
+                        .comparing(item -> getDistanceBetween(bot, item)))
+                .collect(Collectors.toList());
+
+        int dummy_x = x;
+        int dummy_y = y;
+        int dummy_size = this.getBot().getSize();
+
+        for (int i = 0; i < biggerPlayerList.size(); i++)
+        {
+            int dif_x = dummy_x - biggerPlayerList.get(i).getPosition().x;
+            int dif_y = dummy_y - biggerPlayerList.get(i).getPosition().y;
+            int safe_radius = dummy_size + biggerPlayerList.get(i).getSize() + biggerPlayerList.get(i).getSpeed();
+            
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
+            {
+                return false;
+            }
+        }
+
+        for (int i = 0; i < gasCloudList.size(); i++)
+        {
+            int dif_x = dummy_x - gasCloudList.get(i).getPosition().x;
+            int dif_y = dummy_y - gasCloudList.get(i).getPosition().y;
+            int safe_radius = dummy_size + gasCloudList.get(i).getSize() + gasCloudList.get(i).getSpeed();
+            
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
+            {
+                return false;
+            }
+        }
+
+        for (int i = 0; i < supernovaBombList.size(); i++)
+        {
+            int dif_x = dummy_x - supernovaBombList.get(i).getPosition().x;
+            int dif_y = dummy_y - supernovaBombList.get(i).getPosition().y;
+            int safe_radius = dummy_size + supernovaBombList.get(i).getSize() + supernovaBombList.get(i).getSpeed();
+            
+            if (dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius * sensitivity)
+            {
+                return false;
+            }
+        }
+
+        {
+            int dif_x = dummy_x - mapCenterPoint_x;
+            int dif_y = dummy_y - mapCenterPoint_y;
+            int safe_radius = mapRadius - dummy_size;
+            
+            if (dif_x * dif_x + dif_y * dif_y > safe_radius * safe_radius / sensitivity)
+            {
+                return false;
+            }
+        }
+
+        return true;
+
+    }
+
 
     /* 
      * Prosedur torpedoDefense()
@@ -241,6 +346,10 @@ public class BotService {
         return false;
     }
 
+    /*
+     * Prosedur escape
+     * kabur dari musuh terdekat jika harus
+     */
     public boolean escape (PlayerAction playerAction) {
         var biggerPlayerList = gameState.getPlayerGameObjects()
         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER && item.getSize() > bot.getSize() )
@@ -250,7 +359,7 @@ public class BotService {
 
         if (biggerPlayerList.size() != 0){
             System.out.println("Bigger Player");
-            if (getDistanceBetween(biggerPlayerList.get(0), getBot())/60 <= biggerPlayerList.get(0).getSize()/biggerPlayerList.get(0).getSpeed()) {
+            if (getDistanceBetween(biggerPlayerList.get(0), getBot())/60 <= biggerPlayerList.get(0).getSize()/(biggerPlayerList.get(0).getSpeed() * accuracy)) {
                 if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
                     playerAction.heading = getHeadingBetween(biggerPlayerList.get(0));
                     System.out.println("Torpedo 2");
@@ -282,16 +391,19 @@ public class BotService {
         return false;
     }
 
+    /* 
+     * Prosedur smaller target
+     * menyerang target kecil terdekat yang berada pada lintasan
+    */
     public boolean smallerTarget (PlayerAction playerAction) {
         var smallerPlayerList = gameState.getPlayerGameObjects()
         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.PLAYER && item.getSize() < bot.getSize() )
         .sorted(Comparator
                 .comparing(item -> getDistanceBetween(bot, item)))
         .collect(Collectors.toList());
-
         if (smallerPlayerList.size() != 0) {
             System.out.println("Smaller Player");
-            if (getDistanceBetween(smallerPlayerList.get(0), getBot())/60 <= smallerPlayerList.get(0).getSize()/smallerPlayerList.get(0).getSpeed()){
+            if (getDistanceBetween(smallerPlayerList.get(0), getBot())/60 <= smallerPlayerList.get(0).getSize()/(smallerPlayerList.get(0).getSpeed() * accuracy)){
                 if (getBot().torpedoSalvoCount != 0 && getBot().getSize() >= 30) {
                     playerAction.heading = getHeadingBetween(smallerPlayerList.get(0));
                     playerAction.action = PlayerActions.FIRETORPEDOES;
@@ -311,13 +423,17 @@ public class BotService {
         getCentered(playerAction, 1, true);
     }
 
+    /* 
+     * prosedur getCentered
+     * membawa bot ke tengah saat out of bound
+     */
     public boolean getCentered(PlayerAction playerAction){
         return getCentered(playerAction, 1);
     }
     public boolean getCentered(PlayerAction playerAction, double sensitivity){
         return getCentered(playerAction, sensitivity, false);
     }
-    public boolean getCentered(PlayerAction playerAction, double sensitifity, boolean pass){
+    public boolean getCentered(PlayerAction playerAction, double sensitivity, boolean pass){
         double dif_x;
         double dif_y;
 
@@ -331,7 +447,7 @@ public class BotService {
         dif_y = y - mapCenterPoint_y;
         int safe_radius = mapRadius - this.bot.size;
             
-        if ((dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius / sensitifity) || pass)
+        if ((dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius / sensitivity) || pass)
         {
             return false;
         }
@@ -344,104 +460,59 @@ public class BotService {
 
         return true;
     }
-    // public boolean getCentered(PlayerAction playerAction, int sensitifity, boolean pass){
-    //     double dif_x;
-    //     double dif_y;
-    //     double denominator;
-    //     int x = bot.getPosition().x;
-    //     int y = bot.getPosition().y;
-    //     int mapCenterPoint_x = this.gameState.world.centerPoint.x;
-    //     int mapCenterPoint_y = this.gameState.world.centerPoint.y;
-    //     int mapRadius = this.gameState.world.radius;
 
-    //     dif_x = x - mapCenterPoint_x;
-    //     dif_y = y - mapCenterPoint_y;
-    //     int safe_radius = mapRadius - this.bot.size;
+    /*
+     * prosedur tryTeleport
+     * mencoba teleport jika menguntungkan (memakan player) dan aman
+     */
+    public boolean tryTeleport(PlayerAction playerAction){
+        var teleporterList = gameState.getGameObjects()
+            .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER && item.getId().equals(identifyTeleporter(item)))
+            .collect(Collectors.toList());
+
+        if (teleporterList.size() == 0)
+        {
+            return false;
+        }
+        
+        var smallerPlayerList = this.gameState.getPlayerGameObjects()
+            .stream()
+            .filter(item -> !item.id.equals(bot.id) && item.getSize() < this.bot.getSize()) 
+            .sorted(Comparator
+                    .comparing(item -> getDistanceBetween(this.bot, item)))
+            .collect(Collectors.toList());
+
+        int x = teleporterList.get(0).getPosition().x;
+        int y = teleporterList.get(0).getPosition().y;
+
+        // Ada player yang dapat dimakan
+        for (int i = 0; i < smallerPlayerList.size(); i++)
+        {
+            int target_x = (smallerPlayerList.get(i).getPosition().getX());
+            int target_y = (smallerPlayerList.get(i).getPosition().getY());
+            int radius = smallerPlayerList.get(i).getSize() + this.bot.getSize();
+            if (
+                (x - target_x) *  (x - target_x) + (y - target_y) + (y - target_y) < radius * radius
+            )
+            {
+                playerAction.action = PlayerActions.TELEPORT;
+                return true;
+            }
             
-    //     if ((dif_x * dif_x + dif_y * dif_y <= safe_radius * safe_radius / sensitifity) || pass)
-    //     {
-    //         return false;
-    //     }
-
-    //     if (!gameState.getGameObjects().isEmpty()) 
-    //     {
-    //         double fx = 0;
-    //         double fy = 0;
-    //         denominator = Math.pow((dif_x)*(dif_x) + (dif_y)*(dif_y), 3/2);
-    //         fx -= (100 * dif_x) / denominator;
-    //         fy -= (100 * dif_y) / denominator;
-
-    //         List<GameObject> obtaclesList = gameState.getGameObjects()
-    //             .stream()
-    //             .filter(item -> 
-    //                 item.getGameObjectType() != ObjectTypes.FOOD && 
-    //                 item.getGameObjectType() != ObjectTypes.SUPERFOOD &&
-    //                 item.getGameObjectType() != ObjectTypes.SUPERNOVABOMB &&
-    //                 item.getGameObjectType() != ObjectTypes.TORPEDOSALVO )
-    //             .sorted(Comparator
-    //                     .comparing(item -> getDistanceBetween(bot, item)))
-    //             .collect(Collectors.toList());
-    //         obtaclesList.addAll(gameState.getPlayerGameObjects()
-    //             .stream().filter(item -> !item.id.equals(bot.id) && item.getSize() >= bot.getSize())
-    //             .collect(Collectors.toList()));
-
-    //         for (int i = 0; i < obtaclesList.size(); i++){
-    //                 int weight;
-    //                 if (obtaclesList.get(i).getGameObjectType() == ObjectTypes.PLAYER)
-    //                 {
-    //                     weight = -3;
-    //                 }
-    //                 else if (obtaclesList.get(i).getGameObjectType() == ObjectTypes.GASCLOUD)
-    //                 {
-    //                     weight = -2;
-    //                 }
-    //                 else if (obtaclesList.get(i).getGameObjectType() == ObjectTypes.ASTEROIDFIELD)
-    //                 {
-    //                     weight = -1;
-    //                 }
-    //                 else if (obtaclesList.get(i).getGameObjectType() == ObjectTypes.TORPEDOSALVO)
-    //                 {
-    //                     weight = -2;
-    //                 }
-    //                 else if (obtaclesList.get(i).getGameObjectType() == ObjectTypes.SUPERNOVABOMB)
-    //                 {
-    //                     weight = -2;
-    //                 }
-    //                 else 
-    //                 {
-    //                     System.out.println("getCentered: object type not found");
-    //                     weight = 0;
-    //                 }
-
-    //                 dif_x = x - obtaclesList.get(i).position.x;
-    //                 dif_y = y - obtaclesList.get(i).position.y;
-    //                 denominator = Math.pow((dif_x)*(dif_x) + (dif_y)*(dif_y), 3/2);
-    //                 fx -= weight * (obtaclesList.get(i).size * dif_x) / denominator;
-    //                 fy -= weight * (obtaclesList.get(i).size * dif_y) / denominator;
-    //         }
-    //         playerAction.action = PlayerActions.FORWARD;
-    //         playerAction.heading = toDegrees(Math.atan2(fy,fx));
-    //         this.playerAction = playerAction;
-    //         return true;
-    //     } 
-    //     else 
-    //     {
-    //         System.out.println("getCentered: list kosong");
-    //         playerAction.action = PlayerActions.FORWARD;
-    //         playerAction.heading = new Random().nextInt(360);
-    //         this.playerAction = playerAction;
-    //         return false;
-    //     }
-    // }
+        }
+        // Tidak ada player yang dapat dimakan
+        return false;
+    }
 
     /*
      * Prosedur gotoCollectable()
      * menggerakan bot ke posisi optimum, jika posisi sekarang sudah optimum, bot akan berhenti
      */
+
     public boolean gotoCollectable(PlayerAction playerAction) {
         return gotoCollectable(playerAction, 1);
     }
-    public boolean gotoCollectable(PlayerAction playerAction, double sensitifity) {
+    public boolean gotoCollectable(PlayerAction playerAction, double sensitivity) {
         if (gameState.getGameObjects().isEmpty())
         {
             System.out.println("unable to compute next move: empty game objects");
@@ -477,7 +548,7 @@ public class BotService {
         for (int i = 0; i < collectableList.size(); i++)
         {
             int heading = getHeadingBetween(collectableList.get(i));
-            if (isSafeToHead(heading, sensitifity))
+            if (isSafeToHead(heading, sensitivity))
             {
                 playerAction.action = PlayerActions.FORWARD;
                 playerAction.heading = heading;
@@ -491,6 +562,10 @@ public class BotService {
         return false;
     
     }
+    /* 
+     * prosedur avoidTeleporter()
+     * menghindari teleport musuh jika itu milik yang lebih besar
+     */
     public boolean avoidTeleporter(PlayerAction playerAction){
         var teleporterList = gameState.getGameObjects()
         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
@@ -575,7 +650,7 @@ public class BotService {
             {
                 // jika dapat menembak, tembak
                 if (this.bot.getTeleporterCount() > 0 &&
-                    getDistanceBetween(this.bot, target)/20 < target.getSize()/target.getSpeed())
+                    getDistanceBetween(this.bot, target)/20 < target.getSize()/(target.getSpeed() * accuracy))
                 
                 {
                     // CATATAN: mungkin bisa didiversifikasi
@@ -591,13 +666,13 @@ public class BotService {
             else
             {   
                 if (this.bot.getTeleporterCount() > 0 &&
-                    getDistanceBetween(this.bot, target)/20 < target.getSize()/target.getSpeed()) 
+                    getDistanceBetween(this.bot, target)/20 < target.getSize()/(target.getSpeed() * accuracy)) 
                 {
                     playerAction.heading = getHeadingBetween(target);
                     playerAction.action = PlayerActions.FIRETELEPORT;
                 }
                 else if (this.bot.getTorpedoSalvoCount() > 0 &&
-                    getDistanceBetween(this.bot, target)/60 < target.getSize()/target.getSpeed()) 
+                    getDistanceBetween(this.bot, target)/60 < target.getSize()/(target.getSpeed() * accuracy)) 
                 {
                     playerAction.heading = getHeadingBetween(target);
                     playerAction.action = PlayerActions.FIRETORPEDOES;
@@ -620,21 +695,6 @@ public class BotService {
             this.playerAction = playerAction;
             return true;
         }
-
-        // var biggerPlayerList = this.gameState.getPlayerGameObjects()
-        //     .stream()
-        //     .filter(item -> !item.id.equals(bot.id) && item.getSize() < this.bot.getSize()) 
-        //     .sorted(Comparator
-        //             .comparing(item -> getDistanceBetween(bot, item)))
-        //     .collect(Collectors.toList());
-        
-        // var smallerPlayerList = this.gameState.getPlayerGameObjects()
-        //     .stream()
-        //     .filter(item -> !item.id.equals(bot.id) && item.getSize() < this.bot.getSize())
-        //     .sorted(Comparator
-        //             .comparing(item -> getDistanceBetween(bot, item)))
-        //     .collect(Collectors.toList());
-
         
 
         return true;
@@ -654,10 +714,18 @@ public class BotService {
         }
 
         boolean isExecuted;
+        mappingTeleporter();
 
         System.out.println("_______________________________");
         System.out.printf("Tick %d: \n", this.gameState.world.getCurrentTick());
         System.out.printf("x = %d, y = %d\n", this.bot.getPosition().x, this.bot.getPosition().y);
+
+        isExecuted = tryTeleport(playerAction);
+        if (isExecuted) 
+        { 
+            System.out.println("Action : teleporting..");
+            return; 
+        }
 
         isExecuted = torpedoDefense(playerAction);
         if (isExecuted) 
@@ -738,72 +806,3 @@ public class BotService {
 
 
 }
-
-
-// DUMP
-
-        // /* LISTING SHIELDED PLAYER  */
-        // var shieldList = gameState.getGameObjects()
-        //         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.SHIELD)
-        //         .sorted(Comparator
-        //                 .comparing(item -> getDistanceBetween(bot, item)))
-        //         .collect(Collectors.toList());
-
-        // public int getBestAngleMove_calculus(){
-        //     int angle;
-        //     if (!gameState.getGameObjects().isEmpty()) 
-        //     {
-        //         int x = bot.getPosition().x;
-        //         int y = bot.getPosition().y;
-        //         List<GameObject> foodList = gameState.getGameObjects()
-        //             .stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD)
-        //             .sorted(Comparator
-        //                     .comparing(item -> getDistanceBetween(bot, item)))
-        //             .collect(Collectors.toList());
-        //         double fx = 0;
-        //         double fy = 0;
-        //         for (int i = 0; i < foodList.size(); i++){
-        //                 double dif_x = x - foodList.get(i).position.x;
-        //                 double dif_y = y - foodList.get(i).position.y;
-        //                 double denominator = Math.pow((dif_x)*(dif_x) + (dif_y)*(dif_y), 2);
-        //                 fx -= (foodList.get(i).size * dif_x) / denominator;
-        //                 fy -= (foodList.get(i).size * dif_y) / denominator;
-        //         }
-        //         angle = toDegrees(Math.atan2(fy,fx));
-    
-        //         // ______DEBUG BLOCK_______
-        //         System.out.println("___________________");
-        //         System.out.print("Angle: ");
-        //         System.out.println(angle);
-        //         System.out.print("X: ");
-        //         System.out.println(x);
-        //         System.out.print("Y: ");
-        //         System.out.println(y);
-        //         System.out.print("fx: ");
-        //         System.out.println(fx);
-        //         System.out.print("fy: ");
-        //         System.out.println(fy);
-        //         // _________________________
-        //     } 
-        //     else 
-        //     {
-        //         System.out.println("DEBUG: no object");
-        //         angle = new Random().nextInt(360);
-        //     }
-        //     return angle;
-        // }
-
-                // /* LISTING TELEPORTER */
-        // var teleporterList = gameState.getGameObjects()
-        //         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.TELEPORTER)
-        //         .sorted(Comparator
-        //                 .comparing(item -> getDistanceBetween(bot, item)))
-        //         .collect(Collectors.toList());
-
-        // /* LISTING WORMHOLE */
-        // var wormholeList = gameState.getGameObjects()
-        //         .stream().filter(item -> item.getGameObjectType() == ObjectTypes.WORMHOLE )
-        //         .sorted(Comparator
-        //                 .comparing(item -> getDistanceBetween(bot, item)))
-        //         .collect(Collectors.toList());
-        
