@@ -18,5 +18,5 @@
 ## How to build 
 #### Dalam repository ini, sudah ada bot yang telah di build dalam folder target dengan nama file sukatamak.jar, namun jika Anda ingin melakukan build secara manual, Anda perlu terlebih dahulu melakukan download zip file [starter-pack](https://github.com/EntelectChallenge/2021-Galaxio/releases/tag/2021.3.2). Setelah itu unzip file tersebut.
 
-#### Kemudian clone repository ini di direktori 'starter-pack/starter-pack/starter-bots/JavaBot'. Selanjutnya pada buka Command Line dan arahkan ke direktori 'starter-pack/starter-pack/starter-bots/JavaBot'. Jalankan command 'mvn clean package', maka bot akan di compile pada target
+#### Kemudian clone repository ini di direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Selanjutnya pada buka Command Line dan arahkan ke direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Jalankan command `mvn clean package`, maka bot akan di compile pada target
 
