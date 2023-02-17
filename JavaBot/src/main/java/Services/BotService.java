@@ -1,13 +1,14 @@
 package Services;
 
-import java.lang.Math;
-import Enums.*;
-import Models.*;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-import java.util.*;
-import java.util.stream.*;
-
-import javax.swing.text.Position;
+import Enums.ObjectTypes;
+import Enums.PlayerActions;
+import Models.GameObject;
+import Models.GameState;
+import Models.PlayerAction;
 
 public class BotService {
     private GameObject bot;
@@ -149,11 +150,11 @@ public class BotService {
     }
 
     /* 
-     * Prosedur computeShield()
+     * Prosedur torpedoDefense()
      * menyalakan shield jika ada torpedoSalvo yang berpotensi menabrak bot
     */
-    public boolean computeShield(PlayerAction playerAction) {
-        // UBAH KOMPUTASI SUSDUT
+    public boolean torpedoDefense(PlayerAction playerAction) {
+        // UBAH KOMPUTASI SUDUT
         if (this.bot.getShieldCount() == 0 || this.bot.getArrEffects()[4] == 1)
         {
             return false;
@@ -165,9 +166,25 @@ public class BotService {
             .collect(Collectors.toList());
         
         for (int i = 0; i < torpedoList.size(); i++){
-            if (isInside_NT(torpedoList.get(i)) && (torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot)) % 360 <= 90){
-                playerAction.action = PlayerActions.ACTIVATESHIELD;
-                this.playerAction = playerAction;
+            double hitDegree = Math.atan((this.bot.getSize() + 10) / getDistanceBetween(this.getBot(), torpedoList.get(i)) * 180 / Math.PI );
+
+            if (isInside_NT(torpedoList.get(i)) && -45 <= torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot) && (torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot)) <= 45){
+                if (this.bot.getShieldCount() == 1 && this.bot.getArrEffects()[4] == 0) { // menyalakan shield apabila tersedia dan belum menyala
+                    playerAction.action = PlayerActions.ACTIVATESHIELD;
+                    this.playerAction = playerAction;
+                    return true;
+                } else if (getBot().shieldCount == 0 && !(this.bot.getShieldCount() == 0 || this.bot.getArrEffects()[4] == 1)){ // menembaki torpedo yang datang
+                    playerAction.heading = this.getBot().getHeadingBetween(torpedoList.get(i));
+                    playerAction.action = PlayerActions.FIRETORPEDOES;
+                    return true;
+                } else { 
+                    // pasrah
+                }
+                
+            } else if (-1*hitDegree <= torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot) && torpedoList.get(i).getHeading() - torpedoList.get(i).getHeadingBetween(this.bot) <= hitDegree) {
+                // melarikan diri
+                playerAction.action = PlayerActions.STARTAFTERBURNER;
+                playerAction.heading = torpedoList.get(i).getHeading() + 90; // + 90 agar ke arah tangensial sebagai jalur melarikan diri tercepat
                 return true;
             }
         }
@@ -406,13 +423,6 @@ public class BotService {
         this.playerAction = playerAction;
         return false;
     
-    }
-
-    public boolean Handletorpedo (){
-        if (){
-            return false
-        }
-        // true
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
