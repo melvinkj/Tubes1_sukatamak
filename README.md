@@ -20,5 +20,5 @@ Bot ini mengimplementasikan algoritma greedy untuk memenangkan permainan dengan 
 ## How to build 
 Dalam repository ini, sudah ada bot yang telah di build dalam folder target dengan nama file sukatamak.jar, namun jika Anda ingin melakukan build kembali secara manual, Anda perlu terlebih dahulu melakukan download zip file [starter-pack](https://github.com/EntelectChallenge/2021-Galaxio/releases/tag/2021.3.2). Setelah itu unzip file tersebut.
 
-Kemudian clone repositori ini di direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Selanjutnya buka Command Prompt dan arahkan ke direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Jalankan command `mvn clean package`, maka akan muncul hasil build bot dengan nama *sukatamak.jar* pada folder `target`.
+Kemudian clone repositori ini di direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Selanjutnya buka Command Prompt dan arahkan ke direktori `starter-pack/starter-pack/starter-bots/JavaBot`. Jalankan command `mvn clean package`, maka akan muncul hasil build bot dengan nama **sukatamak.jar** pada folder `target`.
 
